@@ -1,0 +1,6 @@
+[package]
+name = "periodic"
+version = "0.1.0"
+authors = ["Misha Wagner <mishajw@gmail.com>"]
+
+[dependencies]
