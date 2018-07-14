@@ -8,9 +8,9 @@ impl Planner {
     pub fn new() -> Planner { Planner {} }
 
     /// Add a callback to be called at `times`
-    pub fn add<'a, T>(
+    pub fn add(
         &mut self,
-        _callback: &Fn() -> (),
+        _callback: impl Fn() -> (),
         times: impl IntoInstantIter,
     )
     {
