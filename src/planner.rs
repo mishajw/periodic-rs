@@ -10,8 +10,8 @@ impl Planner {
     /// Add a callback to be called at `times`
     pub fn add(
         &mut self,
-        _callback: impl Fn() -> (),
-        times: impl IntoInstantIter,
+        callback: impl Fn() -> () + 'static,
+        times: impl IntoInstantIter + 'static,
     )
     {
         let _times = times.into_instant_iter();
