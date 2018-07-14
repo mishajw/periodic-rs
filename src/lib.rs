@@ -5,4 +5,6 @@
 mod planner;
 pub use planner::Planner;
 
+pub mod period;
+
 mod instant_iter;
