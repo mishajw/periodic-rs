@@ -11,9 +11,7 @@ pub trait IntoInstantIter {
 
 impl IntoInstantIter for Vec<Instant> {
     type IterType = ::std::vec::IntoIter<Instant>;
-    fn into_instant_iter(self) -> Self::IterType {
-        self.into_iter()
-    }
+    fn into_instant_iter(self) -> Self::IterType { self.into_iter() }
 }
 
 impl IntoInstantIter for Vec<Duration> {
@@ -41,8 +39,6 @@ impl<I: Iterator<Item = Duration>> DurationToInstantIter<I> {
 impl<I: Iterator<Item = Duration>> Iterator for DurationToInstantIter<I> {
     type Item = Instant;
     fn next(&mut self) -> Option<Instant> {
-        self.prev_iter.next().map(|duration| {
-            self.now + duration
-        })
+        self.prev_iter.next().map(|duration| self.now + duration)
     }
 }
