@@ -22,6 +22,18 @@ impl IntoInstantIter for Vec<Duration> {
     }
 }
 
+impl IntoInstantIter for Instant {
+    type IterType = ::std::vec::IntoIter<Instant>;
+    fn into_instant_iter(self) -> Self::IterType { vec![self].into_iter() }
+}
+
+impl IntoInstantIter for Duration {
+    type IterType = ::std::vec::IntoIter<Instant>;
+    fn into_instant_iter(self) -> Self::IterType {
+        vec![Instant::now() + self].into_iter()
+    }
+}
+
 pub struct DurationToInstantIter<I: Iterator<Item = Duration>> {
     prev_iter: I,
     now: Instant,
