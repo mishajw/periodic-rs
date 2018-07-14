@@ -17,4 +17,9 @@ impl Planner {
         let _times = times.into_instant_iter();
         unimplemented!();
     }
+
+    /// Start running added callbacks
+    pub fn start(&self) {
+        unimplemented!();
+    }
 }
