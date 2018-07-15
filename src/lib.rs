@@ -12,7 +12,7 @@
 //! let mut planner = periodic::Planner::new();
 //! planner.add(
 //!     || println!("every three seconds"),
-//!     periodic::period::Every::new(Duration::from_secs(3)),
+//!     periodic::Every::new(Duration::from_secs(3)),
 //! );
 //! planner.start();
 //! ```
@@ -24,6 +24,7 @@
 mod planner;
 pub use planner::Planner;
 
-pub mod period;
+mod period;
+pub use period::{After, Every};
 
 mod instant_iter;

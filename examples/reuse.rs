@@ -10,14 +10,14 @@ fn main() {
     // Run, and finish, after one second
     planner.add(
         || println!("after one second"),
-        periodic::period::After::new(Duration::from_secs(1)),
+        periodic::After::new(Duration::from_secs(1)),
     );
     thread::sleep(Duration::from_secs(2));
 
     // Planner still works
     planner.add(
         || println!("after one second"),
-        periodic::period::After::new(Duration::from_secs(1)),
+        periodic::After::new(Duration::from_secs(1)),
     );
     thread::sleep(Duration::from_secs(2));
 }

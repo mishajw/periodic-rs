@@ -10,13 +10,13 @@ fn main() {
     // Run every second
     planner.add(
         || println!("every second"),
-        periodic::period::Every::new(Duration::from_secs(1)),
+        periodic::Every::new(Duration::from_secs(1)),
     );
 
     // Run after three seconds
     planner.add(
         || println!("after three seconds"),
-        periodic::period::After::new(Duration::from_secs(3)),
+        periodic::After::new(Duration::from_secs(3)),
     );
 
     // Run at three, five, and seven seconds
