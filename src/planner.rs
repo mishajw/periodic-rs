@@ -11,7 +11,13 @@ pub struct Planner {
     /// Queue of callbacks to execute, ordered by soonest to be executed
     job_queue: Arc<Mutex<BinaryHeap<Job>>>,
     /// Empty sender to wake threads for processing jobs
-    job_processor_tx: Option<mpsc::Sender<()>>,
+    ///
+    /// Wrapped in `Option` because it is set to `None` when the threads are
+    /// not running.
+    ///
+    /// Wrapped in `Arc<Mutex<_>>` so that it can be set to `None` when other
+    /// threads are quitting.
+    job_processor_tx: Arc<Mutex<Option<mpsc::Sender<()>>>>,
 }
 
 impl Planner {
@@ -19,7 +25,7 @@ impl Planner {
     pub fn new() -> Planner {
         Planner {
             job_queue: Arc::new(Mutex::new(BinaryHeap::new())),
-            job_processor_tx: None,
+            job_processor_tx: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -46,7 +52,7 @@ impl Planner {
         // job handler
         if self.is_started() && is_earliest_job {
             Self::spawn_waker(
-                self.job_processor_tx.clone(),
+                self.job_processor_tx.lock().unwrap().clone(),
                 job_next_time.duration_since(Instant::now()),
             );
         }
@@ -66,8 +72,9 @@ impl Planner {
 
         // Create channels for waking up running thread
         let (job_processor_tx, job_processor_rx) = mpsc::channel();
-        self.job_processor_tx = Some(job_processor_tx.clone());
+        *self.job_processor_tx.lock().unwrap() = Some(job_processor_tx.clone());
         let job_queue = self.job_queue.clone();
+        let job_processor_tx = self.job_processor_tx.clone();
 
         // Spawn thread for handling callbacks
         Self::spawn("planner", move || loop {
@@ -77,6 +84,8 @@ impl Planner {
 
             // If no next job, then we're done and the thread can finish
             if next_time.is_none() {
+                // Set to `None` to say that we are no longer running
+                *job_processor_tx.lock().unwrap() = None;
                 break;
             }
 
@@ -99,7 +108,7 @@ impl Planner {
 
             // Otherwise, sleep until the next job
             Self::spawn_waker(
-                Some(job_processor_tx.clone()),
+                job_processor_tx.lock().unwrap().clone(),
                 next_time.unwrap().duration_since(Instant::now()),
             );
             job_processor_rx
@@ -109,7 +118,7 @@ impl Planner {
     }
 
     fn is_started(&self) -> bool {
-        self.job_processor_tx.is_some()
+        self.job_processor_tx.lock().unwrap().is_some()
     }
 
     /// Spawn a thread to wake up the processing thread after a specified time
