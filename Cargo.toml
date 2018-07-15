@@ -2,5 +2,9 @@
 name = "periodic"
 version = "0.1.0"
 authors = ["Misha Wagner <mishajw@gmail.com>"]
+description = "Simple scheduling tool for running tasks at fixed intervals"
+repository = "https://github.com/mishajw/periodic-rs"
+readme = "README.md"
+license = "GPL-3.0"
 
 [dependencies]
