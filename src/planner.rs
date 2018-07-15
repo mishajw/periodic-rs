@@ -70,7 +70,7 @@ impl Planner {
         let job_queue = self.job_queue.clone();
 
         // Spawn thread for handling callbacks
-        thread::spawn(move || loop {
+        Self::spawn("planner", move || loop {
             let mut job_queue_locked = job_queue.lock().unwrap();
             let next_time = job_queue_locked.peek().map(|job| job.next_time);
             let now = Instant::now();
@@ -87,7 +87,7 @@ impl Planner {
                 );
                 // Execute job
                 let spawn_callback = job.callback.clone();
-                thread::spawn(move || (*spawn_callback)());
+                Self::spawn("exec_callback", move || (*spawn_callback)());
                 // Add back in next time for job
                 job.to_next_time()
                     .map(|new_job| job_queue_locked.push(new_job));
@@ -118,10 +118,23 @@ impl Planner {
         duration: Duration,
     )
     {
-        thread::spawn(move || {
+        Self::spawn("waker", move || {
             thread::sleep(duration);
             job_processor_tx.map(|tx| tx.send(()));
         });
+    }
+
+    /// Spawn a thread with a name prefixed by `periodic_`
+    fn spawn(
+        name: impl ::std::fmt::Display,
+        callback: impl FnOnce() -> () + Send + 'static,
+    )
+    {
+        let name = format!("{}_{}", env!("CARGO_PKG_NAME"), name);
+        thread::Builder::new()
+            .name(name.into())
+            .spawn(callback)
+            .expect("Failed to spawn thread with name");
     }
 }
 
