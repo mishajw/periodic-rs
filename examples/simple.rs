@@ -1,5 +1,6 @@
 extern crate periodic;
 
+use std::thread;
 use std::time::{Duration, Instant};
 
 fn main() {
@@ -33,4 +34,6 @@ fn main() {
         || println!("after three seconds"),
         Instant::now() + Duration::from_secs(3),
     );
+
+    thread::sleep(Duration::from_secs(10));
 }
