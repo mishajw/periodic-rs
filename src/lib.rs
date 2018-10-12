@@ -28,3 +28,4 @@ mod period;
 pub use period::{After, Every};
 
 mod instant_iter;
+pub use instant_iter::IntoInstantIter;
