@@ -4,6 +4,9 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use threadpool::ThreadPool;
+use num_cpus;
+
 use instant_iter::IntoInstantIter;
 
 /// Schedules callbacks to be called at specified times
@@ -18,14 +21,25 @@ pub struct Planner {
     /// Wrapped in `Arc<Mutex<_>>` so that it can be set to `None` when other
     /// threads are quitting.
     job_processor_tx: Arc<Mutex<Option<mpsc::Sender<()>>>>,
+    /// The thread pool that contains all threads spawned by the planner
+    thread_pool: Arc<Mutex<ThreadPool>>,
 }
 
 impl Planner {
     #[allow(missing_docs)]
     pub fn new() -> Planner {
+        Self::with_size(num_cpus::get())
+    }
+
+    /// Initialize with a size of the thread pool used to spawn tasks
+    pub fn with_size(thread_pool_size: usize) -> Planner {
         Planner {
             job_queue: Arc::new(Mutex::new(BinaryHeap::new())),
             job_processor_tx: Arc::new(Mutex::new(None)),
+            thread_pool: Arc::new(Mutex::new(ThreadPool::with_name(
+                "periodic".into(),
+                thread_pool_size
+            ))),
         }
     }
 
@@ -77,7 +91,7 @@ impl Planner {
         let job_processor_tx = self.job_processor_tx.clone();
 
         // Spawn thread for handling callbacks
-        Self::spawn("planner", move || loop {
+        self.spawn(move || loop {
             let mut job_queue_locked = job_queue.lock().unwrap();
             let next_time = job_queue_locked.peek().map(|job| job.next_time);
             let now = Instant::now();
@@ -96,7 +110,7 @@ impl Planner {
                 );
                 // Execute job
                 let spawn_callback = job.callback.clone();
-                Self::spawn("exec_callback", move || (*spawn_callback)());
+                self.spawn(move || (*spawn_callback)());
                 // Add back in next time for job
                 job.to_next_time()
                     .map(|new_job| job_queue_locked.push(new_job));
@@ -107,7 +121,7 @@ impl Planner {
             drop(job_queue_locked);
 
             // Otherwise, sleep until the next job
-            Self::spawn_waker(
+            self.spawn_waker(
                 job_processor_tx.lock().unwrap().clone(),
                 next_time.unwrap().duration_since(Instant::now()),
             );
@@ -123,11 +137,12 @@ impl Planner {
 
     /// Spawn a thread to wake up the processing thread after a specified time
     fn spawn_waker(
+        &self,
         job_processor_tx: Option<mpsc::Sender<()>>,
         duration: Duration,
     )
     {
-        Self::spawn("waker", move || {
+        self.spawn(move || {
             thread::sleep(duration);
             job_processor_tx.map(|tx| tx.send(()));
         });
@@ -135,15 +150,12 @@ impl Planner {
 
     /// Spawn a thread with a name prefixed by `periodic_`
     fn spawn(
-        name: impl ::std::fmt::Display,
-        callback: impl FnOnce() -> () + Send + 'static,
+        &self, callback: impl FnOnce() -> () + Send + 'static,
     )
     {
-        let name = format!("{}_{}", env!("CARGO_PKG_NAME"), name);
-        thread::Builder::new()
-            .name(name.into())
+        self.thread_pool.lock().unwrap()
             .spawn(callback)
-            .expect("Failed to spawn thread with name");
+            .expect("Failed to spawn thread");
     }
 }
 

@@ -21,6 +21,9 @@
 
 #![warn(missing_docs)]
 
+extern crate num_cpus;
+extern crate threadpool;
+
 mod planner;
 pub use planner::Planner;
 
