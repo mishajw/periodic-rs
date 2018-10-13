@@ -1,6 +1,6 @@
 [package]
 name = "periodic"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Misha Wagner <mishajw@gmail.com>"]
 description = "Simple scheduling tool for running tasks at fixed intervals"
 repository = "https://github.com/mishajw/periodic-rs"
