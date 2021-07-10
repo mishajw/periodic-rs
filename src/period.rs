@@ -2,7 +2,7 @@
 
 use std::time::{Duration, Instant};
 
-use instant_iter::IntoInstantIter;
+use crate::instant_iter::IntoInstantIter;
 
 /// Times occuring at fixed intervals
 pub struct Every {
