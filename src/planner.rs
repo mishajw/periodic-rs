@@ -4,7 +4,7 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use instant_iter::IntoInstantIter;
+use crate::instant_iter::IntoInstantIter;
 
 /// Schedules callbacks to be called at specified times
 pub struct Planner {
@@ -154,9 +154,9 @@ impl Planner {
 /// Job to be processed by `callback` being called at `next_time`, and then all
 /// times in `rest_times`
 struct Job {
-    callback: Arc<Fn() -> () + Send + Sync + 'static>,
+    callback: Arc<dyn Fn() -> () + Send + Sync + 'static>,
     next_time: Instant,
-    rest_times: Box<Iterator<Item = Instant> + Send + Sync>,
+    rest_times: Box<dyn Iterator<Item = Instant> + Send + Sync>,
 }
 
 impl Job {
